@@ -1,7 +1,62 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: deprecated_member_use
 
-class DashboardScreen extends StatelessWidget {
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:new_project/services/workout_service.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+  bool _isWorkoutActive = false;
+  int _workoutSeconds = 0;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startWorkout(WorkoutService service) {
+    setState(() {
+      _isWorkoutActive = true;
+      _workoutSeconds = 0;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _workoutSeconds++;
+      });
+      service.updateWorkoutDuration(_workoutSeconds);
+    });
+  }
+
+  void _stopWorkout(WorkoutService service) {
+    _timer?.cancel();
+    setState(() {
+      _isWorkoutActive = false;
+    });
+    service.endWorkout();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Workout completed! Great job! 🎉'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,242 +71,335 @@ class DashboardScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              Navigator.pushNamed(context, '/chatbot');
+            },
+            tooltip: 'AI Assistant',
+          ),
+          IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // Navigate to Profile Screen
               Navigator.pushNamed(context, '/profile');
             },
             tooltip: 'Profile',
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.green.shade50, Colors.white],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Today\'s Summary',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+      body: Consumer2<WorkoutService, AuthService>(
+        builder: (context, workoutService, authService, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.green.shade50, Colors.white],
               ),
-              const SizedBox(height: 20),
-
-              // Stats Grid - Row 1
-              Row(
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStatCard(
-                    title: 'Steps',
-                    value: '7,250',
-                    icon: Icons.directions_walk,
-                    color: Colors.blue,
-                    onTap: () {
-                      _showStatDetail(
-                        context,
-                        'Steps',
-                        'You have taken 7,250 steps today. Keep moving!',
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatCard(
-                    title: 'Calories',
-                    value: '420',
-                    icon: Icons.local_fire_department,
-                    color: Colors.orange,
-                    onTap: () {
-                      _showStatDetail(
-                        context,
-                        'Calories',
-                        'You have burned 420 calories today. Great job!',
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Stats Grid - Row 2
-              Row(
-                children: [
-                  _buildStatCard(
-                    title: 'Distance',
-                    value: '5.2 km',
-                    icon: Icons.map,
-                    color: Colors.green,
-                    onTap: () {
-                      _showStatDetail(
-                        context,
-                        'Distance',
-                        'You have covered 5.2 km today. Keep going!',
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatCard(
-                    title: 'Active Min',
-                    value: '45',
-                    icon: Icons.timer,
-                    color: Colors.purple,
-                    onTap: () {
-                      _showStatDetail(
-                        context,
-                        'Active Minutes',
-                        'You have been active for 45 minutes today!',
-                      );
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              // Recent Workouts Section
-              const Text(
-                'Recent Workouts',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-
-              // Workout List
-              _buildWorkoutItem(
-                title: 'Morning Run',
-                duration: '30 min',
-                calories: '300 kcal',
-                icon: Icons.directions_run,
-                color: Colors.blue,
-                onTap: () {
-                  _showWorkoutDetail(
-                    context,
-                    'Morning Run',
-                    '30 min',
-                    '300 kcal',
-                  );
-                },
-              ),
-              _buildWorkoutItem(
-                title: 'Evening Yoga',
-                duration: '45 min',
-                calories: '200 kcal',
-                icon: Icons.self_improvement,
-                color: Colors.purple,
-                onTap: () {
-                  _showWorkoutDetail(
-                    context,
-                    'Evening Yoga',
-                    '45 min',
-                    '200 kcal',
-                  );
-                },
-              ),
-              _buildWorkoutItem(
-                title: 'Strength Training',
-                duration: '60 min',
-                calories: '450 kcal',
-                icon: Icons.fitness_center,
-                color: Colors.orange,
-                onTap: () {
-                  _showWorkoutDetail(
-                    context,
-                    'Strength Training',
-                    '60 min',
-                    '450 kcal',
-                  );
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              // Progress Section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 5,
+                  // Welcome Message
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Weekly Progress',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
+                    child: Row(
                       children: [
-                        Expanded(child: _buildProgressBar('Mon', 60)),
-                        Expanded(child: _buildProgressBar('Tue', 75)),
-                        Expanded(child: _buildProgressBar('Wed', 80)),
-                        Expanded(child: _buildProgressBar('Thu', 55)),
-                        Expanded(child: _buildProgressBar('Fri', 90)),
-                        Expanded(child: _buildProgressBar('Sat', 70)),
-                        Expanded(child: _buildProgressBar('Sun', 65)),
+                        CircleAvatar(
+                          radius: 25,
+                          backgroundColor: Colors.green,
+                          child: Text(
+                            authService.currentUserName?.isNotEmpty == true
+                                ? authService.currentUserName![0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Welcome back,',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                              Text(
+                                authService.currentUserName ?? 'User',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.green),
+                          onPressed: () {
+                            workoutService.refreshData();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Data refreshed!'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                  const SizedBox(height: 20),
 
-              const SizedBox(height: 80), // Extra space for bottom nav
-            ],
-          ),
-        ),
+                  // Stats Cards
+                  const Text(
+                    'Today\'s Summary',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildStatCard(
+                        'Steps',
+                        workoutService.steps.toString(),
+                        Icons.directions_walk,
+                        Colors.blue,
+                        () {
+                          _showStatDetail(
+                            context,
+                            'Steps',
+                            'You have taken ${workoutService.steps} steps today. Keep moving! 💪',
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        'Calories',
+                        workoutService.calories.toStringAsFixed(0),
+                        Icons.local_fire_department,
+                        Colors.orange,
+                        () {
+                          _showStatDetail(
+                            context,
+                            'Calories',
+                            'You have burned ${workoutService.calories.toStringAsFixed(0)} calories today! Great job! 🔥',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildStatCard(
+                        'Distance',
+                        '${workoutService.distance.toStringAsFixed(2)} km',
+                        Icons.map,
+                        Colors.green,
+                        () {
+                          _showStatDetail(
+                            context,
+                            'Distance',
+                            'You have covered ${workoutService.distance.toStringAsFixed(2)} km today! 🏃‍♂️',
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        'Water',
+                        '${workoutService.waterIntake} ml',
+                        Icons.water_drop,
+                        Colors.cyan,
+                        () {
+                          _showWaterDialog(context, workoutService);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Workout Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Workout Timer',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Text(
+                            _formatTime(_workoutSeconds),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildWorkoutButton(
+                              'Running',
+                              Icons.directions_run,
+                              workoutService.selectedWorkout == 'Running',
+                              () => workoutService.selectWorkout('Running'),
+                            ),
+                            const SizedBox(width: 12),
+                            _buildWorkoutButton(
+                              'Cycling',
+                              Icons.directions_bike,
+                              workoutService.selectedWorkout == 'Cycling',
+                              () => workoutService.selectWorkout('Cycling'),
+                            ),
+                            const SizedBox(width: 12),
+                            _buildWorkoutButton(
+                              'Yoga',
+                              Icons.self_improvement,
+                              workoutService.selectedWorkout == 'Yoga',
+                              () => workoutService.selectWorkout('Yoga'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isWorkoutActive
+                                    ? null
+                                    : () => _startWorkout(workoutService),
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Start'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isWorkoutActive
+                                    ? () => _stopWorkout(workoutService)
+                                    : null,
+                                icon: const Icon(Icons.stop),
+                                label: const Text('Stop'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Health Metrics
+                  const Text(
+                    'Health Metrics',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildMetricCard(
+                        '${workoutService.heartRate}',
+                        'BPM',
+                        Icons.favorite,
+                        Colors.red,
+                        () {
+                          _showHeartRateDialog(context, workoutService);
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildMetricCard(
+                        '${workoutService.sleep}',
+                        'Hours',
+                        Icons.bedtime,
+                        Colors.purple,
+                        () {
+                          _showSleepDialog(context, workoutService);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
+        currentIndex: _selectedIndex,
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          if (index == 0) {
-            // Already on Dashboard
-          } else if (index == 1) {
-            // Stats - Show coming soon
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Stats feature coming soon!')),
-            );
+          setState(() {
+            _selectedIndex = index;
+          });
+          if (index == 1) {
+            Navigator.pushNamed(context, '/analytics');
           } else if (index == 2) {
-            // Navigate to Profile
             Navigator.pushNamed(context, '/profile');
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Stats'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Analytics',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -275,11 +423,14 @@ class DashboardScreen extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(title, style: TextStyle(color: Colors.grey.shade600)),
+              Text(
+                title,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -287,94 +438,84 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkoutItem({
-    required String title,
-    required String duration,
-    required String calories,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              spreadRadius: 1,
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$duration • $calories',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.play_circle, color: Colors.green, size: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(String day, double percentage) {
-    return Column(
-      children: [
-        Container(
-          height: 60,
-          width: 30,
+  Widget _buildWorkoutButton(
+    String name,
+    IconData icon,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(10),
+            color: isSelected ? Colors.green : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Container(
-                height: (percentage / 100) * 55,
-                width: 25,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(8),
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                name,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade600,
+                  fontSize: 12,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(day, style: const TextStyle(fontSize: 12)),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(
+    String value,
+    String unit,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 30),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                unit,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -395,44 +536,196 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showWorkoutDetail(
-    BuildContext context,
-    String title,
-    String duration,
-    String calories,
-  ) {
+  void _showWaterDialog(BuildContext context, WorkoutService service) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Duration: $duration'),
-            const SizedBox(height: 8),
-            Text('Calories: $calories'),
-            const SizedBox(height: 8),
-            const Text('Great workout! Keep it up! 💪'),
-          ],
-        ),
+        title: const Text('Add Water'),
+        content: const Text('Add 250ml of water?'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              service.addWater();
               Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Starting $title...')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Added 250ml water! 💧'),
+                  backgroundColor: Colors.cyan,
+                ),
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Start'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.cyan),
+            child: const Text('Add'),
           ),
         ],
       ),
     );
   }
+
+  void _showSleepDialog(BuildContext context, WorkoutService service) {
+    int hours = service.sleep;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Log Sleep'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('How many hours did you sleep?'),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        setState(() {
+                          if (hours > 0) hours--;
+                        });
+                      },
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$hours h',
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          if (hours < 12) hours++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  service.logsleep(hours);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Sleep logged: $hours hours! 😴'),
+                      backgroundColor: Colors.purple,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showHeartRateDialog(BuildContext context, WorkoutService service) {
+    int rate = service.heartRate;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Heart Rate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter your heart rate (BPM)'),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        setState(() {
+                          if (rate > 40) rate--;
+                        });
+                      },
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$rate BPM',
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          if (rate < 200) rate++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  service.updateHeartRate(rate);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Heart rate updated: $rate BPM ❤️'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+extension on WorkoutService {
+  void logsleep(int hours) {}
 }
