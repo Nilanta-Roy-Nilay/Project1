@@ -1,8 +1,11 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
+import '../services/theme_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,8 +17,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isImageLoading = false;
+  bool _notificationsEnabled = true;
 
-  // Pick image from gallery
   Future<void> _pickImageFromGallery() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -61,7 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Take photo from camera
   Future<void> _takePhotoFromCamera() async {
     try {
       final XFile? photo = await _picker.pickImage(
@@ -107,7 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Remove profile picture
   Future<void> _removeProfilePicture() async {
     setState(() {
       _isImageLoading = true;
@@ -130,7 +131,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Show image picker options dialog
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
@@ -146,10 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Change Profile Picture',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               const Divider(),
@@ -171,8 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Remove Picture',
-                    style: TextStyle(color: Colors.red)),
+                title: const Text(
+                  'Remove Picture',
+                  style: TextStyle(color: Colors.red),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _removeProfilePicture();
@@ -197,26 +196,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              _showSettingsDialog(context);
+            },
+            tooltip: 'Settings',
+          ),
+        ],
       ),
-      body: Consumer<AuthService>(
-        builder: (BuildContext context, AuthService auth, Widget? child) {
+      body: Consumer2<AuthService, ThemeService>(
+        builder: (BuildContext context, AuthService auth, ThemeService theme,
+            Widget? child) {
           final String userName = auth.currentUserName ?? 'User';
           final String userEmail = auth.currentUserEmail ?? 'user@example.com';
           final String? profileImagePath = auth.profileImagePath;
 
           if (_isImageLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           return Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.green.shade50, Colors.white],
-              ),
+              gradient: theme.isDarkMode
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.grey.shade900, Colors.black],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.green.shade50, Colors.white],
+                    ),
             ),
             child: Column(
               children: [
@@ -225,13 +238,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade400, Colors.green.shade700],
-                    ),
+                    gradient: theme.isDarkMode
+                        ? LinearGradient(
+                            colors: [
+                              Colors.grey.shade800,
+                              Colors.grey.shade900
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.green.shade400,
+                              Colors.green.shade700
+                            ],
+                          ),
                   ),
                   child: Column(
                     children: [
-                      // Avatar with Edit Button
                       Stack(
                         children: [
                           GestureDetector(
@@ -240,11 +262,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 100,
                               height: 100,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: theme.isDarkMode
+                                    ? Colors.grey.shade700
+                                    : Colors.white,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: (theme.isDarkMode
+                                            ? Colors.white
+                                            : Colors.black)
+                                        .withOpacity(0.2),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -264,17 +291,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         userName.isNotEmpty
                                             ? userName[0].toUpperCase()
                                             : 'U',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 48,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.green,
+                                          color: theme.isDarkMode
+                                              ? Colors.white
+                                              : Colors.green,
                                         ),
                                       ),
                                     )
                                   : null,
                             ),
                           ),
-                          // Edit Icon Button
                           Positioned(
                             bottom: 0,
                             right: 0,
@@ -283,19 +311,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: theme.isDarkMode
+                                      ? Colors.grey.shade800
+                                      : Colors.white,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: (theme.isDarkMode
+                                              ? Colors.white
+                                              : Colors.black)
+                                          .withOpacity(0.2),
                                       blurRadius: 5,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.camera_alt,
                                   size: 20,
-                                  color: Colors.green,
+                                  color: theme.isDarkMode
+                                      ? Colors.white
+                                      : Colors.green,
                                 ),
                               ),
                             ),
@@ -322,15 +357,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 20),
 
                 // Profile Options
                 Expanded(
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       children: [
+                        // Personal Information
                         _buildProfileOption(
                           icon: Icons.person_outline,
                           title: 'Personal Information',
@@ -338,14 +373,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.blue,
                           onTap: () {
                             _showPersonalInfoDialog(
-                              context,
-                              userName,
-                              userEmail,
-                            );
+                                context, userName, userEmail);
                           },
                         ),
                         const SizedBox(height: 12),
 
+                        // Workout History
                         _buildProfileOption(
                           icon: Icons.fitness_center,
                           title: 'Workout History',
@@ -357,17 +390,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
 
+                        // Dark Mode Toggle
+                        _buildDarkModeTile(),
+                        const SizedBox(height: 12),
+
+                        // Notifications
                         _buildProfileOption(
-                          icon: Icons.settings,
-                          title: 'Settings',
-                          subtitle: 'App preferences',
-                          color: Colors.purple,
+                          icon: Icons.notifications,
+                          title: 'Notifications',
+                          subtitle: 'Manage notification settings',
+                          color: Colors.teal,
                           onTap: () {
-                            _showSettingsDialog(context);
+                            _showNotificationDialog();
                           },
                         ),
                         const SizedBox(height: 12),
 
+                        // Help & Support
                         _buildProfileOption(
                           icon: Icons.help_outline,
                           title: 'Help & Support',
@@ -377,32 +416,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _showHelpDialog(context);
                           },
                         ),
+                        const SizedBox(height: 12),
 
+                        // About
+                        _buildProfileOption(
+                          icon: Icons.info_outline,
+                          title: 'About',
+                          subtitle: 'App version: 1.0.0',
+                          color: Colors.grey,
+                          onTap: () {
+                            _showAboutDialog(context);
+                          },
+                        ),
                         const SizedBox(height: 30),
 
                         // Logout Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              _showLogoutDialog(context, auth);
-                            },
-                            icon: const Icon(Icons.logout, color: Colors.red),
-                            label: const Text(
-                              'Logout',
-                              style: TextStyle(color: Colors.red, fontSize: 16),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
+                        _buildLogoutButton(auth, theme.isDarkMode),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   ),
@@ -415,6 +446,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Logout Button Widget
+  Widget _buildLogoutButton(AuthService auth, bool isDarkMode) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          _showLogoutDialog(context, auth);
+        },
+        icon: const Icon(Icons.logout, color: Colors.white),
+        label: const Text(
+          'Logout',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+      ),
+    );
+  }
+
+  // Dark Mode Tile
+  Widget _buildDarkModeTile() {
+    return Consumer<ThemeService>(
+      builder: (context, themeService, child) {
+        return Card(
+          elevation: 2,
+          color: themeService.isDarkMode ? Colors.grey.shade800 : Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: SwitchListTile(
+            title: const Text(
+              'Dark Mode',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            subtitle: const Text('Switch between light and dark theme'),
+            secondary: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.purple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                themeService.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: Colors.purple,
+              ),
+            ),
+            value: themeService.isDarkMode,
+            onChanged: (bool value) {
+              themeService.toggleTheme();
+            },
+            activeColor: Colors.green,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildProfileOption({
     required IconData icon,
     required String title,
@@ -422,31 +520,168 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
+    return Consumer<ThemeService>(
+      builder: (context, themeService, child) {
+        return Card(
+          elevation: 2,
+          color: themeService.isDarkMode ? Colors.grey.shade800 : Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color),
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: themeService.isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: themeService.isDarkMode
+                    ? Colors.grey.shade400
+                    : Colors.grey.shade600,
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            onTap: onTap,
           ),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: onTap,
-      ),
+        );
+      },
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<ThemeService>(
+          builder: (context, themeService, child) {
+            return AlertDialog(
+              title: const Text('Settings'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Dark Mode'),
+                    subtitle: const Text('Change theme appearance'),
+                    value: themeService.isDarkMode,
+                    onChanged: (bool value) {
+                      themeService.toggleTheme();
+                    },
+                    activeColor: Colors.green,
+                    secondary: Icon(
+                      themeService.isDarkMode
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
+                      color:
+                          themeService.isDarkMode ? Colors.white : Colors.amber,
+                    ),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Notifications'),
+                    subtitle: const Text('Receive workout reminders'),
+                    value: _notificationsEnabled,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _notificationsEnabled = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                    secondary:
+                        const Icon(Icons.notifications, color: Colors.green),
+                  ),
+                ],
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showNotificationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Notification Settings'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Workout Reminders'),
+                    subtitle: const Text('Get daily workout reminders'),
+                    value: _notificationsEnabled,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _notificationsEnabled = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                  ),
+                  SwitchListTile(
+                    title: const Text('Achievement Alerts'),
+                    subtitle: const Text('Get notified when you achieve goals'),
+                    value: true,
+                    onChanged: (bool value) {},
+                    activeColor: Colors.green,
+                  ),
+                ],
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notification settings saved!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
   void _showPersonalInfoDialog(
-    BuildContext context,
-    String userName,
-    String userEmail,
-  ) {
+      BuildContext context, String userName, String userEmail) {
     final TextEditingController nameController =
         TextEditingController(text: userName);
     final TextEditingController emailController =
@@ -490,8 +725,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -546,8 +782,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -586,57 +823,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showSettingsDialog(BuildContext context) {
-    bool notifications = true;
-    bool darkMode = false;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text('Settings'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SwitchListTile(
-                    title: const Text('Notifications'),
-                    value: notifications,
-                    onChanged: (bool value) {
-                      setState(() {
-                        notifications = value;
-                      });
-                    },
-                    activeColor: Colors.green,
-                  ),
-                  SwitchListTile(
-                    title: const Text('Dark Mode'),
-                    value: darkMode,
-                    onChanged: (bool value) {
-                      setState(() {
-                        darkMode = value;
-                      });
-                    },
-                    activeColor: Colors.green,
-                  ),
-                ],
-              ),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   void _showHelpDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -663,8 +849,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('About'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.fitness_center, size: 50, color: Colors.green),
+              SizedBox(height: 16),
+              Text(
+                'Fitness App',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text('Version: 1.0.0'),
+              SizedBox(height: 8),
+              Text(
+                'Your personal fitness companion',
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              Text(
+                '© 2024 Fitness App. All rights reserved.',
+                style: TextStyle(fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -683,8 +917,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return AlertDialog(
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -692,12 +927,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+
                 await auth.logout();
+
+                // Close loading dialog
                 if (context.mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  Navigator.pop(context); // Close logout dialog
+
+                  // Navigate to login screen
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    '/',
+                    '/login',
                     (Route<dynamic> route) => false,
+                  );
+
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logged out successfully'),
+                      backgroundColor: Colors.green,
+                    ),
                   );
                 }
               },
