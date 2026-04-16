@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_string_interpolations
+
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
@@ -43,9 +45,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                 session.type,
                 style: const TextStyle(fontSize: 18, color: Colors.white70),
               ),
-
               const SizedBox(height: 40),
-
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -68,7 +68,6 @@ class WorkoutSummaryScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -104,9 +103,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 20),
-
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -147,9 +144,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const Spacer(),
-
                         Row(
                           children: [
                             Expanded(
