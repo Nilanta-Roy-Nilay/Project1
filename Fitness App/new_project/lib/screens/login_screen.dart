@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, unused_field, prefer_final_fields
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -189,8 +191,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         strokeWidth: 2,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
+                                          Colors.white,
+                                        ),
                                       ),
                                     )
                                   : const Text(
