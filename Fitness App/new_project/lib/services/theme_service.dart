@@ -1,4 +1,5 @@
-// services/theme_service.dart
+// ignore_for_file: prefer_typing_uninitialized_variables, avoid_print, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,11 +36,15 @@ class ThemeService extends ChangeNotifier {
     notifyListeners();
   }
 
-  ThemeData getTheme() {
-    return _isDarkMode ? _darkTheme : _lightTheme;
+  ThemeMode getThemeMode() {
+    return _isDarkMode ? ThemeMode.dark : ThemeMode.light;
   }
 
-  ThemeData get _lightTheme {
+  ThemeData getTheme() {
+    return _isDarkMode ? getDarkTheme() : getLightTheme();
+  }
+
+  ThemeData getLightTheme() {
     return ThemeData(
       brightness: Brightness.light,
       primarySwatch: Colors.green,
@@ -53,11 +58,34 @@ class ThemeService extends ChangeNotifier {
       ),
       cardColor: Colors.white,
       dividerColor: Colors.grey.shade200,
-      fontFamily: 'Roboto',
+      dialogBackgroundColor: Colors.white,
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.grey,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+      ),
     );
   }
 
-  ThemeData get _darkTheme {
+  ThemeData getDarkTheme() {
     return ThemeData(
       brightness: Brightness.dark,
       primarySwatch: Colors.green,
@@ -70,8 +98,35 @@ class ThemeService extends ChangeNotifier {
         centerTitle: true,
       ),
       cardColor: Colors.grey.shade800,
-      dividerColor: Colors.grey.shade800,
-      fontFamily: 'Roboto',
+      dividerColor: Colors.grey.shade700,
+      dialogBackgroundColor: Colors.grey.shade800,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: Colors.grey.shade900,
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.grey.shade500,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade700),
+        ),
+      ),
     );
   }
 }
