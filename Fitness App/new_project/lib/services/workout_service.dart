@@ -1,8 +1,9 @@
-// ignore_for_file: unused_field
+// ignore_for_file: prefer_final_fields
 
 import 'package:flutter/material.dart';
 
 class WorkoutService extends ChangeNotifier {
+  List<Workout> _workouts = []; // Empty list instead of null
   int _steps = 0;
   double _calories = 0;
   double _distance = 0;
@@ -12,8 +13,7 @@ class WorkoutService extends ChangeNotifier {
   String? _selectedWorkout;
   int _currentDuration = 0;
 
-  var workouts;
-
+  List<Workout> get workouts => _workouts; // Always returns a list
   int get steps => _steps;
   double get calories => _calories;
   double get distance => _distance;
@@ -33,7 +33,6 @@ class WorkoutService extends ChangeNotifier {
 
   void updateWorkoutDuration(int seconds) {
     _currentDuration = seconds;
-    // Update calories based on workout type and duration
     if (_selectedWorkout == 'Running') {
       _calories = seconds * 0.1;
     } else if (_selectedWorkout == 'Cycling') {
@@ -42,16 +41,22 @@ class WorkoutService extends ChangeNotifier {
       _calories = seconds * 0.05;
     }
 
-    // Update steps (approximately)
     _steps = (seconds * 1.5).toInt();
-
-    // Update distance
     _distance = seconds * 0.008;
-
     notifyListeners();
   }
 
   void endWorkout() {
+    if (_selectedWorkout != null && _currentDuration > 0) {
+      final workout = Workout(
+        id: DateTime.now().toString(),
+        title: _selectedWorkout!,
+        duration: '${(_currentDuration / 60).toInt()} min',
+        calories: '${_calories.toInt()} kcal',
+        date: DateTime.now(),
+      );
+      _workouts.insert(0, workout);
+    }
     _selectedWorkout = null;
     _currentDuration = 0;
     notifyListeners();
@@ -71,4 +76,20 @@ class WorkoutService extends ChangeNotifier {
     _heartRate = rate;
     notifyListeners();
   }
+}
+
+class Workout {
+  final String id;
+  final String title;
+  final String duration;
+  final String calories;
+  final DateTime date;
+
+  Workout({
+    required this.id,
+    required this.title,
+    required this.duration,
+    required this.calories,
+    required this.date,
+  });
 }
