@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -105,7 +107,6 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -153,13 +154,13 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                               isCompleted
                                   ? Icons.check_circle
                                   : isActive
-                                  ? Icons.play_circle
-                                  : Icons.radio_button_unchecked,
+                                      ? Icons.play_circle
+                                      : Icons.radio_button_unchecked,
                               color: isCompleted
                                   ? Colors.green
                                   : isActive
-                                  ? const Color(0xFF4CAF50)
-                                  : Colors.grey,
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.grey,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
@@ -169,8 +170,8 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                                 color: isCompleted
                                     ? Colors.green
                                     : isActive
-                                    ? Colors.black
-                                    : Colors.grey,
+                                        ? Colors.black
+                                        : Colors.grey,
                                 fontWeight: isActive
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -183,9 +184,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 40),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
