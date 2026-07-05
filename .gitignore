@@ -1,0 +1,33 @@
+# Build artifacts
+**/build/
+**/dist/
+**/node_modules/
+**/.gradle/
+**/.dart_tool/
+**/ios/
+**/macos/
+**/*.apk
+**/*.ipa
+**/*.so
+**/*.a
+**/*.dylib
+**/*.dll
+**/*.exe
+**/*.lib
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependencies
+pubspec.lock
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
